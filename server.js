@@ -1,39 +1,43 @@
-const express = require("express");
+ const express = require("express");
 const cors = require("cors");
+const { error } = require("console");
 
 const app = express();
 app.use(cors());
 
 // Route to handle the /api/:date or /api (empty parameter)
-app.get("/api/:date?", (req, res) => {
-    let { date } = req.params;
+const isInvalidDate = (date)=>date.toUTCString()==="Invalid Date"
+app.get("/api/:date", function (req, res)  {
+    let date  =new Date(req.params.date);
 
-    // If no date is provided, use the current date
-    if (!date) {
-        let now = new Date();
-        return res.json({ unix: now.getTime(), utc: now.toUTCString() });
-    }
+   
+  
+      
+    if (isInvalidDate(date)) {
+        date =new Date(+req.params.date);
+  }
+  
+    if (isInvalidDate(date)) {
+      res.json({error: "Invalid date"});
+      return;
+  }
+    res.json({
+    unix: date.getTime(),
+    utc: date.toUTCString()
+  });
+  app.get("/api", (req, res) => {
+    res.json({
+      unix: new Date().getTime(),
+      utc:new Date().toUTCString()
+    })
+  })
 
-    // If the date is a valid Unix timestamp, parse it
-    if (!isNaN(date)) {
-        date = parseInt(date);
-    }
     
-    let validDate = new Date(date);
-
-    // If the date is invalid, return error
-    if (validDate.toString() === "Invalid Date") {
-        return res.json({ error: "Invalid Date" });
-    }
-
+    
     // Return the Unix timestamp and UTC string
-    res.json({ unix: validDate.getTime(), utc: validDate.toUTCString() });
+
 });
 
-// Route for root
-app.get("/", (req, res) => {
-    res.send("Timestamp Microservice is running!");
-});
 
 // Set the port
 const PORT = process.env.PORT || 3000;
